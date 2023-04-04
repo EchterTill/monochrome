@@ -2,26 +2,26 @@
 Monochrome - Color to grayscale
 By Kruwy3A (Till Vogelsang)
 */
+
+extern crate termion;
+
 use std::fs;
 
-fn main() {
+use termion::{color, style};
 
+fn main() {
     credits();
 
-    let image = load_image("boxes.ppm");
+    let mut image = load_image("palette.ppm");
 
-    let pixels = read_pixels(image.0.clone(), image.4);
+    let pixels = read_pixels(&image.0, image.4);
 
-    let gray_pixels = convert_grayscale(pixels.clone());
+    let gray_pixels = convert_grayscale(&pixels);
 
-    let new_image = generate_image(image.0.clone(), image.4, gray_pixels.clone());
+    let new_image = generate_image(&mut image.0, image.4, (&gray_pixels).to_vec());
 
 
-    fs::write("./output.ppm", new_image.clone()).unwrap();
-
-    if image.0 == new_image {
-        println!("Fehler")
-    }
+    fs::write("./output.ppm", &new_image).unwrap();
 }
 
 fn credits() {
@@ -48,7 +48,7 @@ fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
         std::process::exit(65);
     }
 
-    let metadata = get_metadata(contents.clone());
+    let metadata = get_metadata(&contents);
 
     //Debug
     println!("Breite: {}", metadata.0);
@@ -61,7 +61,8 @@ fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
     return (contents, metadata.0, metadata.1, metadata.2, metadata.3);
 }
 
-fn get_next_whitespace(contents: Vec<u8>, start: usize) -> usize {
+
+fn get_next_whitespace(contents: &Vec<u8>, &start: &usize) -> usize {
     for i in start + 1..contents.len() {
         if contents[i] == 10 {
             return i;
@@ -70,7 +71,7 @@ fn get_next_whitespace(contents: Vec<u8>, start: usize) -> usize {
     return start;
 }
 
-fn get_metadata(contents: Vec<u8>) -> (usize, usize, usize, usize) {
+fn get_metadata(contents: &Vec<u8>) -> (usize, usize, usize, usize) {
     let mut wspos: usize = 0;
     let mut size = String::new();
     let mut depth = String::new();
@@ -78,9 +79,9 @@ fn get_metadata(contents: Vec<u8>) -> (usize, usize, usize, usize) {
 
     let mut i = 0;
     while i <= 2 {
-        wspos = get_next_whitespace(contents.clone(), wspos);
+        wspos = get_next_whitespace(&contents, &wspos);
         if contents[wspos + 1] == 35 {
-            wspos = get_next_whitespace(contents.clone(), wspos);
+            wspos = get_next_whitespace(&contents, &wspos);
         }
         metapos[i] = wspos;
 
@@ -101,7 +102,7 @@ fn get_metadata(contents: Vec<u8>) -> (usize, usize, usize, usize) {
     return (size.split_ascii_whitespace().next_back().unwrap().parse().unwrap(), size.split_ascii_whitespace().next().unwrap().parse().unwrap(), depth.parse().unwrap(), wspos + 1);
 }
 
-fn read_pixels(contents: Vec<u8>, start: usize) -> Vec<(usize, usize, usize)> {
+fn read_pixels(contents: &Vec<u8>, start: usize) -> Vec<(usize, usize, usize)> {
     let mut image: Vec<(usize, usize, usize)> = Vec::new();
     for i in start..contents.len() {
         if (i - start) % 3 == 0 {
@@ -111,15 +112,16 @@ fn read_pixels(contents: Vec<u8>, start: usize) -> Vec<(usize, usize, usize)> {
     return image;
 }
 
-fn convert_grayscale(mut pixels: Vec<(usize, usize, usize)>) -> Vec<(usize, usize, usize)> {
+fn convert_grayscale(pixels: &Vec<(usize, usize, usize)>) -> Vec<(usize, usize, usize)> {
+    let mut new_pixels = Vec::with_capacity(pixels.len());
     for i in 0..pixels.len() {
         let average = (pixels[i].0 + pixels[i].1 + pixels[i].2) / 3;
-        pixels[i] = (average, average, average)
+        new_pixels.push((average, average, average));
     }
-    return pixels;
+    return new_pixels;
 }
 
-fn generate_image(mut image: Vec<u8>, start: usize, pixels: Vec<(usize, usize, usize)>) -> Vec<u8> {
+fn generate_image(image: &mut Vec<u8>, start: usize, pixels: Vec<(usize, usize, usize)>) -> &Vec<u8> {
     for i in start..image.len() {
         if (i - start) % 3 == 0 {
             image[i] = pixels[(i - start) / 3].0 as u8;
@@ -129,4 +131,3 @@ fn generate_image(mut image: Vec<u8>, start: usize, pixels: Vec<(usize, usize, u
     }
     return image;
 }
-

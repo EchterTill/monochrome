@@ -6,13 +6,56 @@ By Kruwy3A (Till Vogelsang)
 extern crate termion;
 
 use std::fs;
+use std::io::{stdout, Write};
 
-use termion::{color, style};
+use image::load;
+use termion::color;
+
+
+mod explorer;
 
 fn main() {
+    let mut has_input = false;
+
     credits();
 
-    let mut image = load_image("palette.ppm");
+    use std::io;
+
+    let mut image: (Vec<u8>, usize, usize, usize, usize) = load_image("west_1.ppm");
+
+    loop {
+        println!("Select an option:");
+        println!("1) Set Input");
+        println!("2) Set Output");
+        println!("3) Set Mode");
+        println!("4) Run");
+        eprint!("> ");
+
+        let mut choice = String::new();
+
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Failed to read line");
+
+        match choice.trim() {
+            "1" => {
+                image = load_image(&explorer::get_file());
+                has_input = true;
+            }
+            "2" => println!("Output set"),
+            "3" => {
+                println!("Mode is Color -> Grayscale");
+            }
+            "4" => {
+                if has_input {
+                    println!("Running program");
+                    break;
+                } else { println!("Please set input first"); }
+            }
+            _ => println!("Invalid choice"),
+        }
+    }
+
 
     let pixels = read_pixels(&image.0, image.4);
 
@@ -44,19 +87,19 @@ fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
 
 // 80 -> P; 54 -> 6; Check, if header is valid (P6)
     if !(contents[0] == 80 && contents[1] == 54) {
-        eprintln!("Invalid image format");
-        std::process::exit(65);
+        eprintln!("{}Invalid image format{}", color::Fg(color::Red), color::Fg(color::Reset));
+        return load_image(&explorer::get_file());
     }
 
     let metadata = get_metadata(&contents);
 
-    //Debug
+    /* Debug
     println!("Breite: {}", metadata.0);
     println!("Höhe: {}", metadata.1);
     println!("Farben: {}", metadata.2);
     println!("Start: {}", metadata.3);
     println!("Erster: {}", contents[metadata.3]);
-    println!("Bildlänge: {}", contents.len() - metadata.3);
+    println!("Bildlänge: {}", contents.len() - metadata.3);*/
 
     return (contents, metadata.0, metadata.1, metadata.2, metadata.3);
 }

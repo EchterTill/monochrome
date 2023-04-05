@@ -11,7 +11,6 @@ use std::io::{stdout, Write};
 use image::load;
 use termion::color;
 
-
 mod explorer;
 
 fn main() {
@@ -39,10 +38,14 @@ fn main() {
 
         match choice.trim() {
             "1" => {
-                image = load_image(&explorer::get_file());
+                let filepath = &explorer::get_file();
+                println!("{}", filepath);
+                image = load_image(filepath);
                 has_input = true;
             }
-            "2" => println!("Output set"),
+            "2" => {
+                println!("Coming soon")
+            }
             "3" => {
                 println!("Mode is Color -> Grayscale");
             }
@@ -64,7 +67,7 @@ fn main() {
     let new_image = generate_image(&mut image.0, image.4, (&gray_pixels).to_vec());
 
 
-    fs::write("./output.ppm", &new_image).unwrap();
+    fs::write("output.ppm", &new_image).unwrap();
 }
 
 fn credits() {

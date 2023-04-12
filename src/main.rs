@@ -206,6 +206,12 @@ fn remove_color(pixels: &Vec<(usize, usize, usize)>, color: &str) -> Vec<(usize,
             "r" => {
                 new_pixels.push((0, pixels[i].1, pixels[i].2));
             }
+            "g" => {
+                new_pixels.push((pixels[i].0, 0, pixels[i].2));
+            }
+            "b" => {
+                new_pixels.push((pixels[i].0, pixels[i].1, 0));
+            }
             _ => {}
         }
     }

@@ -26,7 +26,6 @@ fn main() {
 
     credits();
 
-    use std::io;
 
     let mut image: (Vec<u8>, usize, usize, usize, usize) = load_image("west_1.ppm");
 

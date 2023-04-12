@@ -5,15 +5,21 @@ By Kruwy3A (Till Vogelsang)
 
 extern crate termion;
 
+use std::collections::HashMap;
 use std::fs;
-use std::io::{stdout, Write};
 
-use image::load;
 use termion::color;
 
 mod explorer;
 
 fn main() {
+    let mut mode_settings = HashMap::from([
+        ("grayscale", false),
+        ("r", true),
+        ("g", true),
+        ("b", true)
+    ]);
+
     let mut has_input = false;
 
     credits();
@@ -26,7 +32,7 @@ fn main() {
         println!("Select an option:");
         println!("1) Set Input");
         println!("2) Set Output");
-        println!("3) Set Mode");
+        println!("3) Color Settings (Work in progress)");
         println!("4) Run");
         eprint!("> ");
 
@@ -44,10 +50,11 @@ fn main() {
                 has_input = true;
             }
             "2" => {
-                println!("Coming soon")
+                println!("Coming soon");
+                println!("output.ppm");
             }
             "3" => {
-                println!("Mode is Color -> Grayscale");
+                mode_settings = set_mode(mode_settings);
             }
             "4" => {
                 if has_input {
@@ -62,7 +69,7 @@ fn main() {
 
     let pixels = read_pixels(&image.0, image.4);
 
-    let gray_pixels = convert_grayscale(&pixels);
+    let gray_pixels = remove_color(&pixels, "r");
 
     let new_image = generate_image(&mut image.0, image.4, (&gray_pixels).to_vec());
 
@@ -82,6 +89,32 @@ fn credits() {
 │ v0.0.2     │
 │ by Kruwy3A │
 └────────────┘");
+}
+
+fn set_mode(settings: HashMap<&str, bool>) -> HashMap<&str, bool> {
+    println!("Toggle Color settings:");
+    print!("1) Grayscale (");
+    if settings.get("grayscale").unwrap() == &false {
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+
+    print!("2) RED (");
+    if settings.get("r").unwrap() == &false {
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+
+    print!("3) GREEN (");
+    if settings.get("g").unwrap() == &false {
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+
+    print!("4) BLUE (");
+    if settings.get("b").unwrap() == &false {
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+    eprint!("> ");
+
+    return settings;
 }
 
 fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
@@ -107,17 +140,16 @@ fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
     return (contents, metadata.0, metadata.1, metadata.2, metadata.3);
 }
 
-
-fn get_next_whitespace(contents: &Vec<u8>, &start: &usize) -> usize {
-    for i in start + 1..contents.len() {
-        if contents[i] == 10 {
-            return i;
-        }
-    }
-    return start;
-}
-
 fn get_metadata(contents: &Vec<u8>) -> (usize, usize, usize, usize) {
+    fn get_next_whitespace(contents: &Vec<u8>, &start: &usize) -> usize {
+        for i in start + 1..contents.len() {
+            if contents[i] == 10 {
+                return i;
+            }
+        }
+        return start;
+    }
+
     let mut wspos: usize = 0;
     let mut size = String::new();
     let mut depth = String::new();
@@ -163,6 +195,19 @@ fn convert_grayscale(pixels: &Vec<(usize, usize, usize)>) -> Vec<(usize, usize, 
     for i in 0..pixels.len() {
         let average = (pixels[i].0 + pixels[i].1 + pixels[i].2) / 3;
         new_pixels.push((average, average, average));
+    }
+    return new_pixels;
+}
+
+fn remove_color(pixels: &Vec<(usize, usize, usize)>, color: &str) -> Vec<(usize, usize, usize)> {
+    let mut new_pixels = Vec::with_capacity(pixels.len());
+    for i in 0..pixels.len() {
+        match color {
+            "r" => {
+                new_pixels.push((0, pixels[i].1, pixels[i].2));
+            }
+            _ => {}
+        }
     }
     return new_pixels;
 }

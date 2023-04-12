@@ -5,14 +5,16 @@ By Kruwy3A (Till Vogelsang)
 
 extern crate termion;
 
+use std::{fs, io};
 use std::collections::HashMap;
-use std::fs;
 
 use termion::color;
 
 mod explorer;
 
 fn main() {
+    println!("{}", color::Fg(color::LightWhite));
+
     let mut mode_settings = HashMap::from([
         ("grayscale", false),
         ("r", true),
@@ -32,7 +34,7 @@ fn main() {
         println!("Select an option:");
         println!("1) Set Input");
         println!("2) Set Output");
-        println!("3) Color Settings (Work in progress)");
+        println!("3) Color Settings");
         println!("4) Run");
         eprint!("> ");
 
@@ -67,11 +69,25 @@ fn main() {
     }
 
 
-    let pixels = read_pixels(&image.0, image.4);
+    let mut pixels = read_pixels(&image.0, image.4);
 
-    let gray_pixels = remove_color(&pixels, "r");
+    if mode_settings.get("grayscale").unwrap() == &true {
+        pixels = convert_grayscale(&pixels);
+    }
 
-    let new_image = generate_image(&mut image.0, image.4, (&gray_pixels).to_vec());
+    if mode_settings.get("r").unwrap() == &false {
+        pixels = remove_color(&pixels, "r");
+    }
+
+    if mode_settings.get("g").unwrap() == &false {
+        pixels = remove_color(&pixels, "g");
+    }
+
+    if mode_settings.get("b").unwrap() == &false {
+        pixels = remove_color(&pixels, "b");
+    }
+
+    let new_image = generate_image(&mut image.0, image.4, (&pixels).to_vec());
 
 
     fs::write("output.ppm", &new_image).unwrap();
@@ -91,28 +107,50 @@ fn credits() {
 └────────────┘");
 }
 
-fn set_mode(settings: HashMap<&str, bool>) -> HashMap<&str, bool> {
+fn set_mode(mut settings: HashMap<&str, bool>) -> HashMap<&str, bool> {
     println!("Toggle Color settings:");
     print!("1) Grayscale (");
     if settings.get("grayscale").unwrap() == &false {
-        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
-    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::LightWhite))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::LightWhite)) }
 
     print!("2) RED (");
     if settings.get("r").unwrap() == &false {
-        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
-    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::LightWhite))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::LightWhite)) }
 
     print!("3) GREEN (");
     if settings.get("g").unwrap() == &false {
-        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
-    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::LightWhite))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::LightWhite)) }
 
     print!("4) BLUE (");
     if settings.get("b").unwrap() == &false {
-        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::Reset))
-    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::Reset)) }
+        println!("{}OFF{})", color::Fg(color::Red), color::Fg(color::LightWhite))
+    } else { println!("{}ON{})", color::Fg(color::Green), color::Fg(color::LightWhite)) }
     eprint!("> ");
+
+    let mut choice = String::new();
+
+    io::stdin()
+        .read_line(&mut choice)
+        .expect("Failed to read line");
+
+    match choice.trim() {
+        "1" => { *settings.get_mut("grayscale").unwrap() = !*settings.get("grayscale").unwrap() }
+        "2" => {
+            *settings.get_mut("r").unwrap() = !*settings.get("r").unwrap()
+        }
+        "3" => {
+            *settings.get_mut("g").unwrap() = !*settings.get("g").unwrap()
+        }
+        "4" => {
+            *settings.get_mut("b").unwrap() = !*settings.get("b").unwrap()
+
+        }
+
+        _ => {},
+    }
 
     return settings;
 }
@@ -123,7 +161,7 @@ fn load_image(filename: &str) -> (Vec<u8>, usize, usize, usize, usize) {
 
 // 80 -> P; 54 -> 6; Check, if header is valid (P6)
     if !(contents[0] == 80 && contents[1] == 54) {
-        eprintln!("{}Invalid image format{}", color::Fg(color::Red), color::Fg(color::Reset));
+        eprintln!("{}Invalid image format{}", color::Fg(color::Red), color::Fg(color::LightWhite));
         return load_image(&explorer::get_file());
     }
 

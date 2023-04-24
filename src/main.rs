@@ -145,10 +145,9 @@ fn set_mode(mut settings: HashMap<&str, bool>) -> HashMap<&str, bool> {
         }
         "4" => {
             *settings.get_mut("b").unwrap() = !*settings.get("b").unwrap()
-
         }
 
-        _ => {},
+        _ => {}
     }
 
     return settings;
